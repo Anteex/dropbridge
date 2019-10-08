@@ -7,22 +7,17 @@ import java.net.Socket;
 
 public class SocketHandler implements Runnable {
 
+    private WebServer webServer;
     private Socket socket;
-    private boolean isWaiting;
-    private ContentFile contentFile;
-    private WebServer transmitServer;
-    final private int port;
 
-    SocketHandler(Socket socket, int port, ContentFile contentFile) {
+    SocketHandler(WebServer webServer, Socket socket) {
+        this.webServer = webServer;
         this.socket = socket;
-        this.port = port;
-        this.contentFile = contentFile;
         new Thread(this).start();
     }
 
     public void run() {
         try {
-            isWaiting = false;
             handle();
         } catch (IOException e) {
             System.out.println("Error: " + e.getMessage());
@@ -33,7 +28,7 @@ public class SocketHandler implements Runnable {
         BufferedInputStream reader = null;
         PrintStream output = null;
 
-        System.out.println("Starting handle on port " + port);
+        System.out.println("Starting handle on port " + webServer.getPort());
         try {
             reader = new BufferedInputStream(socket.getInputStream());
             output = new PrintStream(socket.getOutputStream());
@@ -47,36 +42,29 @@ public class SocketHandler implements Runnable {
                 return;
             }
 
-            if (http.getMethod().equals("POST")) {
+            if (http.getMethod().equals("POST") && !http.getRoute().isEmpty()) {
                 ContentFile contentFile = http.getFileInfo();
                 System.out.println("Receiving file");
                 System.out.println("Name: " + contentFile.name);
                 System.out.println("Size: " + contentFile.size);
                 contentFile.stream = reader;
-                startTransmition(contentFile);
-                transmitServer.setOnStopListener(new OnStopListener() {
-                    @Override
-                    public void onStop() {
-                        http.response(Http.OK);
-                        isWaiting = false;
-                        System.out.println("Stop loop. Port " + port);
-                    }
-                });
-                isWaiting = true;
-                int a = 0;
-                while (isWaiting) {
+                contentFile.id = http.getRoute();
+                webServer.contentFiles.put(http.getRoute(), contentFile);
+                while (webServer.contentFiles.containsKey(http.getRoute())) {
                     try {
                         Thread.sleep(100);
                     } catch (InterruptedException e) {
                         break;
                     }
                 }
+                http.response(Http.OK);
+                System.out.println("Stop loop. Port " + webServer.getPort());
             }
 
             if (http.getMethod().equals("GET")) {
-                if (contentFile != null) {
-                    http.response(contentFile);
-                    //stop();
+                if (!http.getRoute().isEmpty() && webServer.contentFiles.containsKey(http.getRoute())) {
+                    http.response(webServer.contentFiles.get(http.getRoute()));
+                    webServer.contentFiles.remove(http.getRoute());
                 } else {
                     http.response(Http.OK);
                 }
@@ -89,16 +77,11 @@ public class SocketHandler implements Runnable {
             if (reader != null) {
                 reader.close();
             }
-            System.out.println("End handle on port " + port);
-            socket.close();
+            System.out.println("End handle on port " + webServer.getPort());
+            if (socket != null) {
+                socket.close();
+            }
         }
     }
-
-    private void startTransmition(ContentFile transmitHeader) {
-        transmitServer = new WebServer(8055);
-        transmitServer.start(transmitHeader);
-    }
-
-
 
 }

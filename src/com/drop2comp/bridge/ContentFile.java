@@ -6,11 +6,12 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ContentFile {
+class ContentFile {
 
-    public BufferedInputStream stream;
-    public long size = 0;
-    public String name = "";
+    BufferedInputStream stream;
+    long size = 0;
+    String name = "";
+    String id = "";
     private ArrayList<String> headerLines;
 
     ContentFile(ArrayList<String> headerLines) {

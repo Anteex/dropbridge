@@ -5,10 +5,10 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 
-public class Http {
+class Http {
 
-    public static final int OK = 1;
-    public static final int ERROR = 2;
+    static final int OK = 1;
+    static final int ERROR = 2;
 
     private String route = "";
     private String method = "";
@@ -22,15 +22,15 @@ public class Http {
         readHeader();
     }
 
-    public String getRoute() {
+    String getRoute() {
         return route;
     }
 
-    public String getMethod() {
+    String getMethod() {
         return method;
     }
 
-    public void response(int responceCode) {
+    void response(int responceCode) {
         System.out.println("Response ...");
         switch (responceCode) {
             case OK :
@@ -48,7 +48,7 @@ public class Http {
         }
     }
 
-    public void response(ContentFile contentFile) throws IOException {
+    void response(ContentFile contentFile) throws IOException {
         System.out.println("Response file ...");
         outputStream.println("HTTP/1.0 200 OK");
         outputStream.println("Content-Description: File Transfer");
@@ -82,7 +82,7 @@ public class Http {
     }
 
 
-    public ContentFile getFileInfo() {
+    ContentFile getFileInfo() {
         ArrayList<String> info = new ArrayList<String>();
         readExtraHeader(info);
         return new ContentFile(info);
@@ -119,8 +119,7 @@ public class Http {
     private String extractMethod(String line) {
         int start = 0;
         int end = line.indexOf(' ', start);
-        String method = line.substring(start, end);
-        return method;
+        return line.substring(start, end);
     }
 
     private String readLine(BufferedInputStream in) {

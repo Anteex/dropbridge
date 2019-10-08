@@ -1,32 +1,34 @@
 package com.drop2comp.bridge;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.HashMap;
 
 public class WebServer implements Runnable {
 
+    HashMap<String, ContentFile> contentFiles;
     private boolean isRunning;
     private ServerSocket serverSocket;
-    private ContentFile contentFile;
-    private OnStopListener onStopListener;
     private final int port;
 
-    public WebServer(int port) {
+    WebServer(int port) {
         this.port = port;
+        contentFiles = new HashMap<>();
     }
 
-    public void start(ContentFile contentFile) {
+    void start() {
         isRunning = true;
-        this.contentFile = contentFile;
         new Thread(this).start();
         System.out.println("Start service on port " + getPort());
     }
 
-    public void stop() {
+    int getPort() {
+        return port;
+    }
+
+    private void stop() {
         try {
             isRunning = false;
             if (serverSocket != null) {
@@ -37,12 +39,7 @@ public class WebServer implements Runnable {
             System.out.println("Error closing the server socket: " + e.getMessage());
         }
         serverSocket = null;
-        onStopListener.onStop();
         System.out.println("Stop service on port " + getPort());
-    }
-
-    public int getPort() {
-        return port;
     }
 
     @Override
@@ -52,18 +49,14 @@ public class WebServer implements Runnable {
             serverSocket = new ServerSocket(port);
             while (isRunning) {
                 Socket socket = serverSocket.accept();
-                SocketHandler socketHandler = new SocketHandler(socket, getPort(), contentFile);
+                new SocketHandler(this, socket);
             }
             stop();
         } catch (SocketException e) {
-            System.out.println("Service error:" + e.getMessage());
+            System.out.println("Socket service error:" + e.getMessage());
         } catch (IOException e) {
-            System.out.println("Service error:" + e.getMessage());
+            System.out.println("IO service error:" + e.getMessage());
         }
-    }
-
-    public void setOnStopListener(OnStopListener onStopListener) {
-        this.onStopListener = onStopListener;
     }
 
 }
