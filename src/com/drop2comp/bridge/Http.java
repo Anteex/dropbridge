@@ -131,7 +131,7 @@ public class Http {
 //                System.out.println(in.available());
                 res += (char) r;
             }
-            System.out.println(res);
+//            System.out.println(res);
             in.read();
         }
         catch (IOException e) {
