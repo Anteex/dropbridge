@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="dropbridge:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/dropbridge_jar</output-path>
+    <root id="archive" name="dropbridge.jar">
+      <element id="module-output" name="dropbridge" />
+    </root>
+  </artifact>
+</component>

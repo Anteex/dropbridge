@@ -40,7 +40,7 @@ class ContentFile {
     private void extractName() {
         for (String line: headerLines) {
             if (line.contains("filename")) {
-                Pattern p = Pattern.compile("filename=\"(.+?)\"");
+                Pattern p = Pattern.compile("filename=\"(.+?)\"", Pattern.DOTALL);
                 Matcher m = p.matcher(line);
                 if (m.find()) {
                     name = new String(m.group(1).getBytes(StandardCharsets.ISO_8859_1));

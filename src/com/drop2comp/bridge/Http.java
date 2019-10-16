@@ -3,6 +3,7 @@ package com.drop2comp.bridge;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 
 class Http {
@@ -14,9 +15,11 @@ class Http {
     private String method = "";
     private BufferedInputStream inputStream;
     private PrintStream outputStream;
+    private Log log;
     private static int BUFFER_SIZE = 4 * 1024;
 
     Http(BufferedInputStream inputStream, PrintStream outputStream) {
+        log = new Log(WebServer.LOG_KIND);
         this.inputStream = inputStream;
         this.outputStream = outputStream;
         readHeader();
@@ -31,25 +34,27 @@ class Http {
     }
 
     void response(int responceCode) {
-        System.out.println("Response ...");
+        log.out(Log.MAIN,"Response ...");
         switch (responceCode) {
             case OK :
-                System.out.println("OK");
+                log.out(Log.MAIN, "OK");
                 outputStream.println("HTTP/1.0 200 OK");
                 outputStream.println("Access-Control-Allow-Origin: *");
                 outputStream.println("Access-Control-Allow-Headers: cache-control");
+                outputStream.println();
                 outputStream.flush();
                 break;
             case ERROR :
-                System.out.println("ERROR");
+                log.out(Log.MAIN, "ERROR");
                 outputStream.println("HTTP/1.0 500 Internal Server Error");
+                outputStream.println();
                 outputStream.flush();
                 break;
         }
     }
 
     void response(ContentFile contentFile) throws IOException {
-        System.out.println("Response file ...");
+        log.out(Log.MAIN, "Response file ...");
         outputStream.println("HTTP/1.0 200 OK");
         outputStream.println("Content-Description: File Transfer");
         outputStream.println("Content-Type: application/octet-stream");
@@ -77,7 +82,7 @@ class Http {
             }
             outputStream.flush();
         } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
+            log.out(Log.ERRORS, "Error: " + e.getMessage());
         }
     }
 
@@ -91,8 +96,13 @@ class Http {
     private void readExtraHeader(ArrayList<String> info) {
         for (int i=0; i<2; i++) {
             String line;
-            while (!(line = readLine(this.inputStream)).isEmpty()) {
-                info.add(line);
+            boolean firstLine = true;
+            while (!(line = readLine(this.inputStream)).isEmpty() || firstLine) {
+                firstLine = false;
+                if (!line.isEmpty()) {
+                    info.add(line);
+                    log.out(Log.HEADERS, line);
+                }
             }
         }
     }
@@ -100,7 +110,7 @@ class Http {
     private void readHeader() {
         String line;
         while (!(line = readLine(this.inputStream)).isEmpty()) {
-//            System.out.println(line);
+            log.out(Log.HEADERS, line);
             if (line.startsWith("GET /") || line.startsWith("POST /") || line.startsWith("OPTIONS /")) {
                 method = extractMethod(line);
                 route = extractRoute(line);
@@ -126,11 +136,9 @@ class Http {
         String res = "";
         int r;
         try {
-            while (in.available() > 0 && (r = in.read()) != 13) {
-//                System.out.println(in.available());
+            while ((r = in.read()) != 13) {
                 res += (char) r;
             }
-//            System.out.println(res);
             in.read();
         }
         catch (IOException e) {

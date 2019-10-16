@@ -9,19 +9,22 @@ import java.util.HashMap;
 public class WebServer implements Runnable {
 
     HashMap<String, ContentFile> contentFiles;
+    static final byte LOG_KIND = Log.HEADERS | Log.MAIN | Log.ERRORS;
     private boolean isRunning;
     private ServerSocket serverSocket;
     private final int port;
+    private Log log;
 
     WebServer(int port) {
         this.port = port;
         contentFiles = new HashMap<>();
+        log = new Log(WebServer.LOG_KIND);
     }
 
     void start() {
         isRunning = true;
         new Thread(this).start();
-        System.out.println("Start service on port " + getPort());
+        log.out(Log.MAIN,"Start service on port " + getPort());
     }
 
     int getPort() {
@@ -36,15 +39,15 @@ public class WebServer implements Runnable {
                 serverSocket = null;
             }
         } catch (IOException e) {
-            System.out.println("Error closing the server socket: " + e.getMessage());
+            log.out(Log.ERRORS, "Error closing the server socket: " + e.getMessage());
         }
         serverSocket = null;
-        System.out.println("Stop service on port " + getPort());
+        log.out(Log.MAIN, "Stop service on port " + getPort());
     }
 
     @Override
     public void run() {
-        System.out.println("Running ...");
+        log.out(Log.MAIN, "Running ...");
         try {
             serverSocket = new ServerSocket(port);
             while (isRunning) {
@@ -53,9 +56,9 @@ public class WebServer implements Runnable {
             }
             stop();
         } catch (SocketException e) {
-            System.out.println("Socket service error:" + e.getMessage());
+            log.out(Log.ERRORS, "Socket service error:" + e.getMessage());
         } catch (IOException e) {
-            System.out.println("IO service error:" + e.getMessage());
+            log.out(Log.ERRORS, "IO service error:" + e.getMessage());
         }
     }
 
