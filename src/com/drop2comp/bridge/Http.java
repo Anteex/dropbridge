@@ -18,8 +18,8 @@ class Http {
     private Log log;
     private static int BUFFER_SIZE = 4 * 1024;
 
-    Http(BufferedInputStream inputStream, PrintStream outputStream) {
-        log = new Log(WebServer.LOG_KIND);
+    Http(BufferedInputStream inputStream, PrintStream outputStream, Log log) {
+        this.log = log;
         this.inputStream = inputStream;
         this.outputStream = outputStream;
         readHeader();
@@ -109,6 +109,7 @@ class Http {
 
     private void readHeader() {
         String line;
+        log.out(Log.HEADERS, "-= HEADERS BEGIN =-");
         while (!(line = readLine(this.inputStream)).isEmpty()) {
             log.out(Log.HEADERS, line);
             if (line.startsWith("GET /") || line.startsWith("POST /") || line.startsWith("OPTIONS /")) {
@@ -116,6 +117,7 @@ class Http {
                 route = extractRoute(line);
             }
         }
+        log.out(Log.HEADERS, "-= HEADERS END =-");
     }
 
     private String extractRoute(String line) {
@@ -133,18 +135,35 @@ class Http {
     }
 
     private String readLine(BufferedInputStream in) {
-        String res = "";
+        String result = "";
+        long maxTimeMillis = System.currentTimeMillis() + WebServer.TIMEOUT_MILLIS;
+        try {
+            while (System.currentTimeMillis() < maxTimeMillis) {
+                if (in.available() > 0) {
+                    result = readCharByChar(in);
+                    break;
+                }
+            }
+        }
+        catch (IOException e) {
+            return "";
+        }
+        return result;
+    }
+
+    private String readCharByChar(BufferedInputStream in) {
+        String result = "";
         int r;
         try {
-            while ((r = in.read()) != 13) {
-                res += (char) r;
+            while ((r = in.read()) != 13 && r != -1) {
+                result += (char) r;
             }
             in.read();
         }
         catch (IOException e) {
             return "";
         }
-        return res;
+        return result;
     }
 
 }

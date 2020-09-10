@@ -8,14 +8,26 @@ public class Log {
     static final byte ERRORS  = 0b00000100;
 
     private byte mask;
+    private String prefix;
 
     Log(byte mask) {
         this.mask = mask;
+        this.prefix = "";
     }
 
     void out(byte kind, String message) {
         if ((mask & kind) != 0) {
-            System.out.println(message);
+            if (prefix.isEmpty()) {
+                System.out.println(message);
+            } else {
+                System.out.println("(" + prefix + ") " + message);
+            }
         }
     }
+
+    void setPrefix(String prefix) {
+        this.prefix = prefix;
+    }
+
+
 }

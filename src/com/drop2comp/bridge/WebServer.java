@@ -8,8 +8,10 @@ import java.util.HashMap;
 
 public class WebServer implements Runnable {
 
+    static final byte LOG_KIND = Log.MAIN | Log.ERRORS;
+    static final long TIMEOUT_MILLIS = 5000;
+
     HashMap<String, ContentFile> contentFiles;
-    static final byte LOG_KIND = Log.HEADERS | Log.MAIN | Log.ERRORS;
     private boolean isRunning;
     private ServerSocket serverSocket;
     private final int port;

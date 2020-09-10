@@ -10,6 +10,7 @@ public class SocketHandler implements Runnable {
     private WebServer webServer;
     private Socket socket;
     private Log log;
+    private long threadId;
 
     SocketHandler(WebServer webServer, Socket socket) {
         this.webServer = webServer;
@@ -20,6 +21,8 @@ public class SocketHandler implements Runnable {
 
     public void run() {
         try {
+            threadId = Thread.currentThread().getId();
+            log.setPrefix(String.valueOf(threadId));
             handle();
         } catch (IOException e) {
             log.out(Log.ERRORS, "Error: " + e.getMessage());
@@ -34,14 +37,13 @@ public class SocketHandler implements Runnable {
         try {
             reader = new BufferedInputStream(socket.getInputStream());
             output = new PrintStream(socket.getOutputStream());
-            final Http http = new Http(reader, output);
+            final Http http = new Http(reader, output, log);
 
             log.out(Log.MAIN, "Method: " + http.getMethod());
             log.out(Log.MAIN, "Route: " + http.getRoute());
 
             if (http.getMethod().equals("OPTIONS")) {
                 http.response(http.OK);
-                return;
             }
 
             if (http.getMethod().equals("POST") && !http.getRoute().isEmpty()) {
